@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GD Attendance Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f4f4f4;
+    }
+    h1 {
+      text-align: center;
+    }
+    .section {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 25px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    input {
+      margin: 5px 0;
+      padding: 8px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 8px 15px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 5px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background: #007bff;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>GD Attendance Tracker</h1>
+
+  <div class="section">
+    <h3>Add Attendance</h3>
+    <input type="text" id="name" placeholder="Name">
+    <input type="text" id="status" placeholder="Present/Absent">
+    <button onclick="addAttendance()">Add Attendance</button>
+  </div>
+
+  <div class="section">
+    <h3>Add Preference</h3>
+    <input type="text" id="prefName" placeholder="Name">
+    <input type="text" id="preference" placeholder="Preference">
+    <button onclick="addPreference()">Add Preference</button>
+  </div>
+
+  <div class="section">
+    <h3>Attendance Records</h3>
+    <table id="attendanceTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h3>Preferences Records</h3>
+    <table id="preferencesTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Preference</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
