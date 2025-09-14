@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GD Attendance Tracker</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            margin: 10px 0 0;
+            opacity: 0.9;
+            font-size: 1.2em;
+        }
+        
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+            font-weight: 500;
+            color: #6c757d;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            background: white;
+            color: #4facfe;
+            border-bottom: 3px solid #4facfe;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .controls {
+            margin-bottom: 30px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: transform 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            position: relative;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .student-name {
+            background: #f8f9fa !important;
+            font-weight: 600;
+            color: #495057;
+            text-align: left;
+            padding-left: 20px;
+        }
+        
+        .gd-date {
+            background: #e3f2fd;
+            font-weight: 500;
+            color: #1976d2;
+            min-width: 80px;
+            writing-mode: horizontal-tb;
+            text-align: center;
+        }
+        
+        .sunday { background: #ffebee; color: #c62828; }
+        .tuesday { background: #e8f5e8; color: #2e7d32; }
+        .thursday { background: #fff3e0; color: #ef6c00; }
+        .saturday { background: #f3e5f5; color: #7b1fa2; }
+        
+        .attendance-cell {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        
+        .attendance-cell:hover {
+            background: #f0f0f0;
+        }
+        
+        .present {
+            background: #c8e6c9 !important;
+            color: #1b5e20;
+            font-weight: bold;
+        }
+        
+        .absent {
+            background: #ffcdd2 !important;
+            color: #b71c1c;
+            font-weight: bold;
+        }
+        
+        .consecutive-absent {
+            background: #b71c1c !important;
+            color: white;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 5px solid #4facfe;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        input, select {
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+        
+        .preference-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 5px solid #56ab2f;
+        }
+        
+        .download-section {
+            text-align: center;
+            margin: 30px 0;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            color: white;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+        
+        .current-date-info {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 5px solid #4caf50;
+            text-align: center;
+            font-weight: 600;
+            color: #2e7d32;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 GD Attendance Tracker - 2025</h1>
+            <p>Track attendance for Group Discussions | Placement Preparation</p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab(0)">📋 Attendance Tracker</button>
+            <button class="tab" onclick="switchTab(1)">⏰ Time Preferences</button>
+            <button class="tab" onclick="switchTab(2)">📈 Analytics</button>
+        </div>
+        
+        <!-- Attendance Tracker Tab -->
+        <div class="tab-content active">
+            <div class="current-date-info">
+                🗓️ Today is Sunday, September 14, 2025 - GD Session Day! 
+                <br>Next sessions: Tue Sep 16 | Thu Sep 18 | Sat Sep 20
+            </div>
+            
+            <div class="controls">
+                <div class="input-group">
+                    <input type="text" id="studentName" placeholder="Enter student name">
+                    <button class="btn" onclick="addStudent()">Add Student</button>
+                </div>
+                <button class="btn btn-success" onclick="exportToCSV()">📥 Download CSV</button>
+                <button class="btn btn-danger" onclick="clearAllData()">🗑️ Clear All</button>
+            </div>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color present"></div>
+                    <span>Present (P)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color absent"></div>
+                    <span>Absent (A)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color consecutive-absent"></div>
+                    <span>4+ Consecutive Absences</span>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table id="attendanceTable">
+                    <thead id="tableHeader"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Time Preferences Tab -->
+        <div class="tab-content">
+            <h3>⏰ Set Your Preferred GD Timings</h3>
+            <div class="input-group">
+                <input type="text" id="prefStudentName" placeholder="Enter student name">
+                <select id="timePreference">
+                    <option value="">Select Preferred Time</option>
+                    <optgroup label="🌅 Morning Sessions">
+                        <option value="6:00 AM - 7:00 AM">6:00 AM - 7:00 AM</option>
+                        <option value="7:00 AM - 8:00 AM">7:00 AM - 8:00 AM</option>
+                        <option value="8:00 AM - 9:00 AM">8:00 AM - 9:00 AM</option>
+                        <option value="9:00 AM - 10:00 AM">9:00 AM - 10:00 AM</option>
+                        <option value="10:00 AM - 11:00 AM">10:00 AM - 11:00 AM</option>
+                        <option value="11:00 AM - 12:00 PM">11:00 AM - 12:00 PM</option>
+                    </optgroup>
+                    <optgroup label="🌞 Afternoon Sessions">
+                        <option value="12:00 PM - 1:00 PM">12:00 PM - 1:00 PM</option>
+                        <option value="1:00 PM - 2:00 PM">1:00 PM - 2:00 PM</option>
+                        <option value="2:00 PM - 3:00 PM">2:00 PM - 3:00 PM</option>
+                        <option value="3:00 PM - 4:00 PM">3:00 PM - 4:00 PM</option>
+                        <option value="4:00 PM - 5:00 PM">4:00 PM - 5:00 PM</option>
+                        <option value="5:00 PM - 6:00 PM">5:00 PM - 6:00 PM</option>
+                    </optgroup>
+                    <optgroup label="🌆 Evening Sessions">
+                        <option value="6:00 PM - 7:00 PM">6:00 PM - 7:00 PM</option>
+                        <option value="7:00 PM - 8:00 PM">7:00 PM - 8:00 PM</option>
+                        <option value="8:00 PM - 9:00 PM">8:00 PM - 9:00 PM</option>
+                        <option value="9:00 PM - 10:00 PM">9:00 PM - 10:00 PM</option>
+                        <option value="10:00 PM - 11:00 PM">10:00 PM - 11:00 PM</option>
+                    </optgroup>
+                    <optgroup label="🌙 Night Sessions">
+                        <option value="11:00 PM - 12:00 AM">11:00 PM - 12:00 AM</option>
+                        <option value="12:00 AM - 1:00 AM">12:00 AM - 1:00 AM</option>
+                        <option value="1:00 AM - 2:00 AM">1:00 AM - 2:00 AM</option>
+                        <option value="2:00 AM - 3:00 AM">2:00 AM - 3:00 AM</option>
+                        <option value="3:00 AM - 4:00 AM">3:00 AM - 4:00 AM</option>
+                        <option value="4:00 AM - 5:00 AM">4:00 AM - 5:00 AM</option>
+                        <option value="5:00 AM - 6:00 AM">5:00 AM - 6:00 AM</option>
+                    </optgroup>
+                </select>
+                <button class="btn" onclick="addPreference()">Add Preference</button>
+            </div>
+            <div id="preferencesContainer"></div>
+        </div>
+        
+        <!-- Analytics Tab -->
+        <div class="tab-content">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number" id="totalStudents">0</div>
+                    <div>Total Students</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="totalSessions">0</div>
+                    <div>GD Sessions</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="avgAttendance">0%</div>
+                    <div>Avg Attendance</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="studentsToRemove">0</div>
+                    <div>Students to Remove</div>
+                </div>
+            </div>
+            
+            <div class="stats-card">
+                <h4>📊 Attendance Summary</h4>
+                <div id="attendanceSummary"></div>
+            </div>
+            
+            <div class="stats-card">
+                <h4>⚠️ Students with 4+ Consecutive Absences</h4>
+                <div id="removeList"></div>
+            </div>
+        </div>
+        
+        <div class="download-section">
+            <h3>📥 Download Complete Tracker</h3>
+            <p>Get your complete attendance tracker with all data in Excel-compatible format</p>
+            <button class="btn btn-success" onclick="downloadCompleteTracker()" style="font-size: 18px; padding: 15px 30px;">
+                📊 Download Complete Tracker
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Generate GD dates for Sunday, Tuesday, Thursday, Saturday from Sept 14, 2025 till December 2025
+        function generateGDDates() {
+            const dates = [];
+            // Start from today - Sunday, September 14, 2025
+            const startDate = new Date(2025, 8, 14); // Month is 0-indexed, so 8 = September
+            const endDate = new Date(2025, 11, 31); // December 31, 2025
+            
+            const gdDays = [0, 2, 4, 6]; // Sunday=0, Tuesday=2, Thursday=4, Saturday=6
+            
+            let currentDate = new Date(startDate);
+            while (currentDate <= endDate) {
+                if (gdDays.includes(currentDate.getDay())) {
+                    dates.push(new Date(currentDate));
+                }
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            
+            console.log('Generated GD Dates:', dates.slice(0, 10).map(d => d.toDateString()));
+            return dates;
+        }
+        
+        let gdDates = generateGDDates();
+        let students = JSON.parse(localStorage.getItem('gdStudents')) || [];
+        let attendanceData = JSON.parse(localStorage.getItem('gdAttendance')) || {};
+        let preferences = JSON.parse(localStorage.getItem('gdPreferences')) || {};
+        
+        function saveData() {
+            localStorage.setItem('gdStudents', JSON.stringify(students));
+            localStorage.setItem('gdAttendance', JSON.stringify(attendanceData));
+            localStorage.setItem('gdPreferences', JSON.stringify(preferences));
+        }
+        
+        function switchTab(index) {
+            document.querySelectorAll('.tab').forEach((tab, i) => {
+                tab.classList.toggle('active', i === index);
+            });
+            document.querySelectorAll('.tab-content').forEach((content, i) => {
+                content.classList.toggle('active', i === index);
+            });
+            
+            if (index === 2) {
+                updateAnalytics();
+            } else if (index === 1) {
+                displayPreferences();
+            }
+        }
+        
+        function formatDate(date) {
+            const options = { day: '2-digit', month: 'short' };
+            return date.toLocaleDateString('en-US', options);
+        }
+        
+        function getDayClass(date) {
+            const day = date.getDay();
+            switch(day) {
+                case 0: return 'sunday';
+                case 2: return 'tuesday';
+                case 4: return 'thursday';
+                case 6: return 'saturday';
+                default: return '';
+            }
+        }
+        
+        function createTable() {
+            const header = document.getElementById('tableHeader');
+            const body = document.getElementById('tableBody');
+            
+            // Create header with dates in vertical layout
+            let headerHTML = '<tr><th rowspan="2" class="student-name">Student Name</th>';
+            
+            // First row - dates
+            gdDates.forEach(date => {
+                const dayClass = getDayClass(date);
+                headerHTML += `<th class="gd-date ${dayClass}">${formatDate(date)}</th>`;
+            });
+            headerHTML += '<th rowspan="2">Total<br>Present</th><th rowspan="2">Attendance<br>%</th><th rowspan="2">Consecutive<br>Absences</th><th rowspan="2">Action</th></tr>';
+            
+            // Second row - days
+            headerHTML += '<tr>';
+            gdDates.forEach(date => {
+                const dayClass = getDayClass(date);
+                headerHTML += `<th class="gd-date ${dayClass}"><small>${date.toLocaleDateString('en-US', {weekday: 'short'})}</small></th>`;
+            });
+            headerHTML += '</tr>';
+            header.innerHTML = headerHTML;
+            
+            // Create body
+            let bodyHTML = '';
+            students.forEach((student, studentIndex) => {
+                bodyHTML += `<tr>
+                    <td class="student-name">${student}</td>`;
+                
+                gdDates.forEach((date, dateIndex) => {
+                    const dateKey = date.toISOString().split('T')[0];
+                    const attendance = attendanceData[student] && attendanceData[student][dateKey];
+                    const cellClass = attendance === 'P' ? 'present' : attendance === 'A' ? 'absent' : '';
+                    const consecutiveCount = getConsecutiveAbsences(student, dateIndex);
+                    const isConsecutive = consecutiveCount >= 4 && attendance === 'A';
+                    
+                    bodyHTML += `<td class="attendance-cell ${cellClass} ${isConsecutive ? 'consecutive-absent' : ''}" 
+                                onclick="toggleAttendance('${student}', '${dateKey}', ${dateIndex})" 
+                                title="Click to toggle attendance">
+                                ${attendance || '-'}
+                            </td>`;
+                });
+                
+                const stats = getStudentStats(student);
+                const consecutiveAbsences = getMaxConsecutiveAbsences(student);
+                const shouldRemove = consecutiveAbsences >= 4;
+                
+                bodyHTML += `
+                    <td><strong>${stats.present}</strong></td>
+                    <td><strong>${stats.percentage}%</strong></td>
+                    <td class="${shouldRemove ? 'consecutive-absent' : ''}">${consecutiveAbsences}</td>
+                    <td><button class="btn btn-danger" onclick="removeStudent(${studentIndex})">Remove</button></td>
+                </tr>`;
+            });
+            
+            body.innerHTML = bodyHTML;
+        }
+        
+        function toggleAttendance(student, dateKey, dateIndex) {
+            if (!attendanceData[student]) {
+                attendanceData[student] = {};
+            }
+            
+            const current = attendanceData[student][dateKey];
+            if (current === 'P') {
+                attendanceData[student][dateKey] = 'A';
+            } else if (current === 'A') {
+                delete attendanceData[student][dateKey];
+            } else {
+                attendanceData[student][dateKey] = 'P';
+            }
+            
+            saveData();
+            createTable();
+        }
+        
+        function getConsecutiveAbsences(student, fromDateIndex) {
+            let count = 0;
+            for (let i = fromDateIndex; i >= 0; i--) {
+                const dateKey = gdDates[i].toISOString().split('T')[0];
+                const attendance = attendanceData[student] && attendanceData[student][dateKey];
+                if (attendance === 'A') {
+                    count++;
+                } else {
+                    break;
+                }
+            }
+            return count;
+        }
+        
+        function getMaxConsecutiveAbsences(student) {
+            let maxCount = 0;
+            let currentCount = 0;
+            
+            gdDates.forEach(date => {
+                const dateKey = date.toISOString().split('T')[0];
+                const attendance = attendanceData[student] && attendanceData[student][dateKey];
+                
+                if (attendance === 'A') {
+                    currentCount++;
+                    maxCount = Math.max(maxCount, currentCount);
+                } else {
+                    currentCount = 0;
+                }
+            });
+            
+            return maxCount;
+        }
+        
+        function getStudentStats(student) {
+            let present = 0;
+            let total = 0;
+            
+            gdDates.forEach(date => {
+                const dateKey = date.toISOString().split('T')[0];
+                const attendance = attendanceData[student] && attendanceData[student][dateKey];
+                if (attendance) {
+                    total++;
+                    if (attendance === 'P') present++;
+                }
+            });
+            
+            const percentage = total > 0 ? Math.round((present / total) * 100) : 0;
+            return { present, total, percentage };
+        }
+        
+        function addStudent() {
+            const name = document.getElementById('studentName').value.trim();
+            if (name && !students.includes(name)) {
+                students.push(name);
+                saveData();
+                createTable();
+                document.getElementById('studentName').value = '';
+            }
+        }
+        
+        function removeStudent(index) {
+            const student = students[index];
+            if (confirm(`Remove ${student}?`)) {
+                students.splice(index, 1);
+                delete attendanceData[student];
+                delete preferences[student];
+                saveData();
+                createTable();
+            }
+        }
+        
+        function addPreference() {
+            const name = document.getElementById('prefStudentName').value.trim();
+            const time = document.getElementById('timePreference').value;
+            
+            if (name && time) {
+                preferences[name] = time;
+                saveData();
+                displayPreferences();
+                document.getElementById('prefStudentName').value = '';
+                document.getElementById('timePreference').value = '';
+            }
+        }
+        
+        function displayPreferences() {
+            const container = document.getElementById('preferencesContainer');
+            let html = '';
+            
+            Object.entries(preferences).forEach(([name, time]) => {
+                html += `
+                    <div class="preference-card">
+                        <strong>${name}</strong> prefers <strong>${time}</strong>
+                        <button class="btn btn-danger" style="float: right;" onclick="removePreference('${name}')">Remove</button>
+                    </div>`;
+            });
+            
+            container.innerHTML = html || '<p>No preferences added yet.</p>';
+        }
+        
+        function removePreference(name) {
+            delete preferences[name];
+            saveData();
+            displayPreferences();
+        }
+        
+        function updateAnalytics() {
+            document.getElementById('totalStudents').textContent = students.length;
+            document.getElementById('totalSessions').textContent = gdDates.length;
+            
+            let totalAttendancePercentage = 0;
+            let studentsWithAttendance = 0;
+            let studentsToRemove = 0;
+            let summaryHTML = '';
+            let removeListHTML = '';
+            
+            students.forEach(student => {
+                const stats = getStudentStats(student);
+                const consecutiveAbsences = getMaxConsecutiveAbsences(student);
+                
+                if (stats.total > 0) {
+                    totalAttendancePercentage += stats.percentage;
+                    studentsWithAttendance++;
+                }
+                
+                if (consecutiveAbsences >= 4) {
+                    studentsToRemove++;
+                    removeListHTML += `<div style="margin: 10px 0; padding: 15px; background: #ffebee; border-left: 4px solid #f44336; border-radius: 5px;">
+                        <strong>${student}</strong> - ${consecutiveAbsences} consecutive absences
+                    </div>`;
+                }
+                
+                summaryHTML += `<div style="display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee;">
+                    <span><strong>${student}</strong></span>
+                    <span>${stats.present}/${stats.total} sessions (${stats.percentage}%)</span>
+                </div>`;
+            });
+            
+            const avgAttendance = studentsWithAttendance > 0 ? Math.round(totalAttendancePercentage / studentsWithAttendance) : 0;
+            document.getElementById('avgAttendance').textContent = avgAttendance + '%';
+            document.getElementById('studentsToRemove').textContent = studentsToRemove;
+            document.getElementById('attendanceSummary').innerHTML = summaryHTML || '<p>No attendance data available.</p>';
+            document.getElementById('removeList').innerHTML = removeListHTML || '<p>No students need to be removed.</p>';
+        }
+        
+        function exportToCSV() {
+            let csv = 'Student Name';
+            gdDates.forEach(date => {
+                csv += ',' + formatDate(date);
+            });
+            csv += ',Total Present,Attendance %,Max Consecutive Absences\n';
+            
+            students.forEach(student => {
+                csv += student;
+                gdDates.forEach(date => {
+                    const dateKey = date.toISOString().split('T')[0];
+                    const attendance = attendanceData[student] && attendanceData[student][dateKey];
+                    csv += ',' + (attendance || '-');
+                });
+                const stats = getStudentStats(student);
+                const consecutiveAbsences = getMaxConsecutiveAbsences(student);
+                csv += ',' + stats.present + ',' + stats.percentage + '%,' + consecutiveAbsences + '\n';
+            });
+            
+            downloadCSV(csv, 'GD_Attendance_Tracker_2025.csv');
+        }
+        
+        function downloadCompleteTracker() {
+            // Create comprehensive data
+            let data = 'GD ATTENDANCE TRACKER - 2025\n';
+            data += 'Generated on: ' + new Date().toLocaleDateString() + '\n\n';
+            
+            // Attendance data
+            data += 'ATTENDANCE DATA:\n';
+            data += 'Student Name';
+            gdDates.forEach(date => {
+                data += ',' + formatDate(date);
+            });
+            data += ',Total Present,Attendance %,Max Consecutive Absences\n';
+            
+            students.forEach(student => {
+                data += student;
+                gdDates.forEach(date => {
+                    const dateKey = date.toISOString().split('T')[0];
+                    const attendance = attendanceData[student] && attendanceData[student][dateKey];
+                    data += ',' + (attendance || '-');
+                });
+                const stats = getStudentStats(student);
+                const consecutiveAbsences = getMaxConsecutiveAbsences(student);
+                data += ',' + stats.present + ',' + stats.percentage + '%,' + consecutiveAbsences + '\n';
+            });
+            
+            // Time preferences
+            data += '\n\nTIME PREFERENCES:\n';
+            data += 'Student Name,Preferred Time\n';
+            Object.entries(preferences).forEach(([name, time]) => {
+                data += name + ',' + time + '\n';
+            });
+            
+            // Summary statistics
+            data += '\n\nSUMMARY STATISTICS:\n';
+            data += 'Total Students:,' + students.length + '\n';
+            data += 'Total GD Sessions:,' + gdDates.length + '\n';
+            
+            let totalAttendancePercentage = 0;
+            let studentsWithAttendance = 0;
+            let studentsToRemove = 0;
+            
+            students.forEach(student => {
+                const stats = getStudentStats(student);
+                const consecutiveAbsences = getMaxConsecutiveAbsences(student);
+                
+                if (stats.total > 0) {
+                    totalAttendancePercentage += stats.percentage;
+                    studentsWithAttendance++;
+                }
+                
+                if (consecutiveAbsences >= 4) {
+                    studentsToRemove++;
+                }
+            });
+            
+            const avgAttendance = studentsWithAttendance > 0 ? Math.round(totalAttendancePercentage / studentsWithAttendance) : 0;
+            data += 'Average Attendance:,' + avgAttendance + '%\n';
+            data += 'Students to Remove (4+ consecutive absences):,' + studentsToRemove + '\n';
+            
+            downloadCSV(data, 'Complete_GD_Tracker_2025.csv');
+        }
+        
+        function downloadCSV(content, filename) {
+            const blob = new Blob([content], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+        
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
+                students = [];
+                attendanceData = {};
+                preferences = {};
+                saveData();
+                createTable();
+                displayPreferences();
+            }
+        }
+        
+        // Initialize with sample data for demonstration
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, creating table...');
+            gdDates = generateGDDates(); // Regenerate dates to ensure correct 2025 dates
+            
+            // Add sample students and data for demonstration
+            if (students.length === 0) {
+                students = ['John Smith', 'Sarah Wilson', 'Mike Johnson', 'Emma Davis', 'Alex Brown'];
+                
+                // Add sample attendance data
+                const sampleDates = gdDates.slice(0, 8); // First 8 GD sessions
+                
+                // John - Perfect attendance (100%)
+                attendanceData['John Smith'] = {};
+                sampleDates.forEach(date => {
+                    attendanceData['John Smith'][date.toISOString().split('T')[0]] = 'P';
+                });
+                
+                // Sarah - Good attendance (87.5%, 1 absence)
+                attendanceData['Sarah Wilson'] = {};
+                sampleDates.forEach((date, index) => {
+                    attendanceData['Sarah Wilson'][date.toISOString().split('T')[0]] = index === 3 ? 'A' : 'P';
+                });
+                
+                // Mike - Average attendance (62.5%, 3 absences)
+                attendanceData['Mike Johnson'] = {};
+                sampleDates.forEach((date, index) => {
+                    attendanceData['Mike Johnson'][date.toISOString().split('T')[0]] = [2, 4, 6].includes(index) ? 'A' : 'P';
+                });
+                
+                // Emma - Inconsistent (50%, 4 absences)
+                attendanceData['Emma Davis'] = {};
+                sampleDates.forEach((date, index) => {
+                    attendanceData['Emma Davis'][date.toISOString().split('T')[0]] = index % 2 === 0 ? 'P' : 'A';
+                });
+                
+                // Alex - Poor attendance (25%, 6 absences)
+                attendanceData['Alex Brown'] = {};
+                sampleDates.forEach((date, index) => {
+                    attendanceData['Alex Brown'][date.toISOString().split('T')[0]] = [0, 7].includes(index) ? 'P' : 'A';
+                });
+                
+                // Add sample preferences
+                preferences = {
+                    'John Smith': '9:00 AM - 10:00 AM',
+                    'Sarah Wilson': '7:00 PM - 8:00 PM',
+                    'Mike Johnson': '2:00 PM - 3:00 PM',
+                    'Emma Davis': '6:00 PM - 7:00 PM',
+                    'Alex Brown': '8:00 PM - 9:00 PM'
+                };
+                
+                saveData();
+            }
+            
+            createTable();
+            displayPreferences();
+            updateLeaderboard(); // Initialize leaderboard
+            console.log('First 5 GD dates:', gdDates.slice(0, 5).map(d => d.toDateString()));
+        });
+        
+        // Auto-save functionality
+        setInterval(saveData, 30000); // Save every 30 seconds
+        
+        // Handle Enter key for adding students
+        document.getElementById('studentName').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addStudent();
+            }
+        });
+        
+        document.getElementById('prefStudentName').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addPreference();
+            }
+        });
+    </script>
+</body>
+</html>
